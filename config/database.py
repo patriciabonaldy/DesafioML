@@ -126,12 +126,9 @@ class OracleDB:
 
 
     def insertar_en_detalle_lote_site(self, cursor_ins, reg_count, mapa):
-        cursor_ins.executemany("""
-            INSERT INTO c##meli1.DETALLE_LOTE_SITE
-                (SITE, ID_ITEM, ID_LOTE)
-            VALUES
-                (:1, :2, :3)
-        """,  mapa, batcherrors = True)
+        #['id', 'site_id', 'price', 'start_time', 'name_catg','description_currency', 'nickname']
+        string_sql = 'INSERT INTO DETALLE_LOTE_SITE (ID_ITEM,"SITE",PRICE,START_TIME,"NAME",DESCRIPCION,NICKNAME, ID_LOTE) VALUES (:1, :2,:3, :4, :5, :6, :7, :8)'
+        cursor_ins.executemany(string_sql,  mapa, batcherrors = True)
         count_error = len(cursor_ins.getbatcherrors())
         reg_count = reg_count + cursor_ins.rowcount
         return reg_count

@@ -85,14 +85,9 @@ class ManagerFile():
             yield mapa      
             
 
-    """def obtener_estadisticas(self):
-        for _file in self.list_files:
-            self.num_rows +=_file.num_rows
-            self.total_rows += f.lines
-        self.total_error_rows = self.total_rows - self.num_rows  
-        logger.info("Total split files {}".format(self.total_uploaded  )  )
+    def get_estadisticas(self):
+        logger.info("Total split files {}".format(str(len(self.list_files)) )  )
         logger.info("Total regs insertados {}".format(self.num_rows  )  )
-        logger.info("Total lineas en error {}".format(self.total_error_rows  )  )"""
 
     @profile
     def upload_chunks(self, file, filename, extens, limitedLine, limitedColumn, encoding):       
@@ -160,11 +155,12 @@ class ManagerFile():
 
     @profile
     def procesa_file(self,id_lote):
-        #f = self.list_files[0]
         for f in self.list_files:
             watch_memory("ManagerFile", "procesa_file")    
             self.split_File(id_lote,f)   
-            self.process_lines(id_lote, f)         
+            self.process_lines(id_lote, f)
+        self.oracle.update_estado_lote(id_lote,'PR')    
+        self.get_estadisticas()             
 
     
     def process_lines(self, id_lote, f):
@@ -183,29 +179,32 @@ class ManagerFile():
                 copy_result = result.copy()
                 [x.append(id_lote) for x in result ]  
                               
-                self.get_manager_resquest(copy_result, f)
-                self.result.append(result)
-                # crea la url raiz https://api.mercadolibre.com/items/"MLA781978699
-
+                response_ok = self.get_manager_resquest(copy_result, f)
+                self.result.append(response_ok)
 
             waitPool(pool)     
-            #if len(self.result) >0:            
-                #conex = self.oracle.get_connection_CX()   
-                #n = 0
-            """
-            for lines in  self.result:
-                logging.info('Archivo {} guardando bloque linea {} '.format(f.fname, n))
-                self.oracle.save_dataset_to_oracle_bulk(conex, id_lote,lines) 
-                logging.info('--------------------------------------------------------')
-                n += 1
-            self.oracle.close_connection(conex)"""
+            if len(self.result) >0:  
+                conex = self.oracle.get_connection_CX()    
+                logging.info('Archivo {} guardando bloque linea'.format(f.fname))
+                try:  
+                    for reg in  self.result:
+                        blocks = reg.values.tolist()
+                        [ n.append(id_lote) for n in blocks]
+                        regs = list([ tuple(n) for n in blocks])
+                        self.num_rows += self.oracle.save_dataset_to_oracle_bulk(conex, id_lote,regs) 
+                    logging.info('--------------------------------------------------------')
+                except Exception as econex:
+                    logger.info("Error procesando sub-archivo {}".format(f.fname) )  
+                finally:
+                    self.oracle.close_connection(conex)  
         except Exception as e:
             logger.info("Error procesando sub-archivo {}".format(f.fname) )         
 
 
     def get_manager_resquest(self, copy_result, f):
         try:
-            self.manager_request.get_atributes_item(copy_result)   
+            id_lote = copy_result[0][2]
+            return self.manager_request.get_atributes_item(copy_result)   
         except Exception as e:
             logger.info("Error obteniendo peticiones- archivo {}, id_lote= {}".format(f.fname, id_lote) ) 
             

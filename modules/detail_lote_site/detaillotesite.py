@@ -6,7 +6,7 @@ def getdetaillotesite(id_lote):
   
     
 def searchDetailLoteSite(id_lote):
-    sqlString ="""select id_lote,site,id_item,start_time,price,descripcion,nickname,name,categoria
+    sqlString ="""select id_lote,site,id_item,price,start_time,name,descripcion,nickname
                     from c##meli1.detalle_lote_site"""
     data_detailotesite = []                
     if id_lote is not None and id_lote!='':

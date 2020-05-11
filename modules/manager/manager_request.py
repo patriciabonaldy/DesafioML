@@ -56,10 +56,10 @@ class ManagerRequest():
             if resp.status_code != 200:
                 logger.error(str(resp._content) )     
             else:
-                resp_list = []
-                text = resp.text.rstrip('\n|\r|;')
-                resp_list = json.loads(text)
+                resp_list = []                
                 try:
+                    text = resp.text.rstrip('\n|\r|;')
+                    resp_list = json.loads(text)
                     resp_list = list(resp_list)
                     res_failed = list([ n["body"] for n  in resp_list if n["code"]!=200]) 
                     list_ok    = list([ n["body"] for n  in resp_list if n["code"]==200])
@@ -83,12 +83,12 @@ class ManagerRequest():
             url         = base+url_ctg
             gp_currency = self.response_ok.groupby("currency_id")["currency_id"].count()
             gp_currency = list(gp_currency.keys())
-            list_url_sl = list([base+url_ctg+str(ct) for ct in gp_currency])
+            list_url_sl = list([base+url_ctg+str(ct) for ct in gp_currency if ct !=''])
             response_currency_ok, response_failed, list_ok = self.execute_request(url, list_url_sl)
             if len(list_ok) > 0:
                 response_ok = pd.DataFrame(list_ok)
                 self.response_currency_ok =  response_ok[['id','description']]
-                self.response_currency_ok.columns = ['currency_id', 'description'] 
+                self.response_currency_ok.columns = ['currency_id', 'description_currency'] 
             else:
                 self.oracle.update_estado_lote(id_lote,'ER')
                 raise requests.RequestException ("No existen los ID en -  {} de ML.".format(url))
@@ -145,6 +145,25 @@ class ManagerRequest():
         except Exception as e:
             logger.error("Error obteniendo peticiones- ")
 
+
+    def merge_df(self):
+        if len(self.response_ok) == 0:
+            return
+        else:
+            self.response_ok['id'] = self.response_ok['id'].str.replace(r'\D+', '').astype('int')
+            merged_ctg          = pd.merge(left=self.response_ok, right=self.response_ctg_ok, how='left', left_on='category_id', right_on='category_id')
+            self.response_ok.drop('category_id', axis=1, inplace=True)            
+
+            if len(self.response_currency_ok) > 0:
+                merged_currency     = pd.merge(left=merged_ctg, right=self.response_currency_ok, how='left', left_on='currency_id', right_on='currency_id')
+                self.response_ok.drop('currency_id', axis=1, inplace=True)
+            
+                merged_seller       = pd.merge(left=merged_currency, right=self.response_seller_ok, how='left', left_on='seller_id', right_on='seller_id')
+                self.response_ok    = merged_seller
+                self.response_ok.drop('seller_id', axis=1, inplace=True)
+        
+            
+
         
     def get_atributes_item(self, copy_result):
         try:
@@ -160,18 +179,26 @@ class ManagerRequest():
             if len(list_ok) > 0:
                 response_ok = pd.DataFrame(list_ok)
                 self.response_ok =  response_ok[['id', 'site_id', 'price', 'start_time', 'category_id', 'currency_id', 'seller_id']] 
-                self.response_ok['price'] = self.response_ok['price'].fillna(0)
-                self.response_ok['currency_id'] = self.response_ok['currency_id'].fillna(0)
+                pd.options.mode.chained_assignment = None
+                self.response_ok['price'].fillna(0, inplace=True)
+                self.response_ok['currency_id'].fillna('', inplace=True)
                 self.get_categories()   
-                self.get_currencies()
-                self.get_sellers()             
+                self.get_currencies()                  
+                self.get_sellers()    
+                self.merge_df()  
+                self.response_ok['name_catg'].fillna('', inplace=True) 
+                self.response_ok['description_currency'].fillna('', inplace=True) 
+                self.response_ok['nickname'].fillna('', inplace=True)
+                       
             else:
                 self.oracle.update_estado_lote(id_lote,'ER')
                 raise requests.RequestException ("No existen los ID en - {} de ML.".format(url))
+            return self.response_ok[['id', 'site_id', 'price', 'start_time', 'name_catg', 'description_currency', 'nickname']] 
         except requests.RequestException as re:
             logger.error("No existen los ID en -  {} de ML.".format(url)) 
             raise requests.RequestException ("No existen los ID en -  {} de ML.".format(url))
         except Exception as e:
             logger.error("Error obteniendo peticiones- ")
+            raise requests.RequestException ("Error obteniendo peticiones")
 
             

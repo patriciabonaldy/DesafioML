@@ -50,7 +50,7 @@ def config_logging(path, file_name, log_level):
     logger.addHandler(file_handler)
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(log_formatter)
-    logger.addHandler(console_handler)
+    #logger.addHandler(console_handler)
     logger.setLevel(log_level)
     logger.info('Logging configurado: '.join(file_path_and_name))
     return logger

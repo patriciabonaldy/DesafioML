@@ -25,7 +25,6 @@ def task( id_lote, lines, strategy):
 def download_site(url):
     with session.get(url) as response:
         name = current_process().name
-        #print(f"{name}:Read {len(response.content)} from {url}")
         return response
 
 
@@ -51,6 +50,7 @@ def apply_imap(sites):
     pool = Pool()
     try:        
         result = pool.imap(download_site, sites) 
+        time.sleep(5)
         return result
     except KeyboardInterrupt: 
         print('User Interupt\n')
