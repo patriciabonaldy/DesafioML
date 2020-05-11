@@ -1,0 +1,43 @@
+{% extends 'index.html' %}
+
+{% block body %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/"></a>
+    <form class="form-inline my-2 my-lg-0" action="{{ url_for('getLoteSite') }}">
+        <input name="id_lote" class="form-control mr-sm-2" type="search" placeholder="ingrese valor a buscar...." aria-label="Search">
+        <button class="btn btn-outline-success my-2 my-sm-0" type="submit" action=>Search</button>
+    </form>
+</nav>
+<form action="/lotesite" method="GET">
+<div class="col-md-7">
+    <table class="table table-striped table-bordered bg-white table-sm">
+        <thead>
+            <tr>
+                <td>ID_LOTE</td>
+                <td>NOMBRE_ARCHIVO</td>
+                <td>ENCODE</td>
+                <td>EXTENSION</td>
+                <td>SEPARADOR_COLUMNA</td>
+                <td>FECHA_INSERCION</td>
+                <td>ESTADO</td>
+                <td>DETALLE</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for losite in lotesite %}
+                <tr>
+                    <td>{{ losite.0 }}</td>
+                    <td>{{ losite.1 }}</td>
+                    <td>{{ losite.2 }}</td>
+                    <td>{{ losite.3 }}</td>
+                    <td>{{ losite.4 }}</td>
+                    <td>{{ losite.5 }}</td>
+                    <td>{{ losite.6 }}</td>
+                    <td>{{ losite.7 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

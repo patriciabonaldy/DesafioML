@@ -1,0 +1,45 @@
+{% extends 'index.html' %}
+
+{% block body %}
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="/"></a>
+    <form class="form-inline my-2 my-lg-0" action="{{ url_for('getDetailLoteSite') }}">
+        <input name="id_dtlote" class="form-control mr-sm-2" type="search" placeholder="ingrese valor a buscar...." aria-label="Search">
+        <button class="btn btn-outline-success my-2 my-sm-0" type="submit" action=>Search</button>
+    </form>
+</nav>
+<form action="/detaillote" method="GET">
+<div class="col-md-7">
+    <table class="table table-striped table-bordered bg-white table-sm">
+        <thead>
+            <tr>
+                <td>id_lote</td>
+                <td>site</td>
+                <td>id_item</td>
+                <td>start_time</td>
+                <td>price</td>
+                <td>descripcion</td>
+                <td>nickname</td>
+                <td>name</td>
+                <td>categoria</td>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dt in detaillote %}
+                <tr>
+                    <td>{{ dt.0 }}</td>
+                    <td>{{ dt.1 }}</td>
+                    <td>{{ dt.2 }}</td>
+                    <td>{{ dt.3 }}</td>
+                    <td>{{ dt.4 }}</td>
+                    <td>{{ dt.5 }}</td>
+                    <td>{{ dt.6 }}</td>
+                    <td>{{ dt.7 }}</td>
+                    <td>{{ dt.8 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

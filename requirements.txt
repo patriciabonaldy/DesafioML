@@ -1,0 +1,10 @@
+flask_dropzone
+cx_Oracle
+sqlalchemy
+Unidecode
+flask
+flask-api
+python-box
+psutil
+requests
+pandas

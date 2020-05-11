@@ -1,0 +1,56 @@
+{% extends 'index.html' %}
+
+{% block body %}
+<div class="col-md-7">
+<h2>Select file(s) to upload</h2>
+<p>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		<ul class=flashes>
+		{% for message in messages %}
+		  <li>{{ message }}</li>
+		{% endfor %}
+		</ul>
+	  {% endif %}
+	{% endwith %}
+</p>
+
+<form method="post" action="/upload" enctype="multipart/form-data">
+    <dl>
+		<p>
+			<input type="file" name="files[]" multiple="true" autocomplete="off" required>
+		</p>
+	</dl>
+	<p>Encode: <input type="text" name="listaencode" list="ListaExtension"></p>
+	<datalist id=ListaExtension>
+		{% for listenc in list_encode %}
+			<option>{{listenc}}</option>
+		{% endfor %}
+	</datalist>
+	<p> </p>
+	<p>Tipo Arcvhivo: <input type="text" name="tipoarchivo" list="tipoarchivo"></p>
+	<datalist id=tipoarchivo>
+		{% for tipoarchivo in tiparch %}
+			<option>{{tipoarchivo}}</option>
+		{% endfor %}
+	</datalist>
+	<p> </p>
+	<p>Separador de Columnas: <input type="text" name="separadorcol" list="separadorcol"></p>
+	<datalist id=separadorcol>
+		{% for sepcolum in sepcol %}
+			<option>{{sepcolum}}</option>
+		{% endfor %}
+	</datalist>
+	<p> </p>
+	<p>Separador de Filas: <input type="text" name="separadorfil" list="separadorfil"></p>
+	<datalist id=separadorfil>
+		{% for sepfilas in sepfil %}
+			<option>{{sepfilas}}</option>
+		{% endfor %}
+	</datalist>
+    <p>
+		<input type="submit" value="Submit">
+	</p>
+</div>
+</form>
+{% endblock %}
