@@ -162,8 +162,7 @@ class ManagerFile():
     def procesa_file(self,id_lote):
         #f = self.list_files[0]
         for f in self.list_files:
-            watch_memory("ManagerFile", "procesa_file")
-            self.process_lines(id_lote, f)         
+            watch_memory("ManagerFile", "procesa_file")    
             self.split_File(id_lote,f)   
             self.process_lines(id_lote, f)         
 
@@ -175,12 +174,15 @@ class ManagerFile():
             self.result = []
 
             for lines in  f.paginate_lines(): 
+                if len(lines)==0:
+                    pass
                 watch_memory("ManagerFile", "process_lines") 
                 if pool._state ==  'CLOSE':
                     pool = Pool()
-                result = apply_async_with_callback(pool, id_lote, lines, self.strategy).get(999999)
+                result = apply_async_with_callback(pool, id_lote, lines, self.strategy).get(999999999)
                 copy_result = result.copy()
-                [x.append(id_lote) for x in result ]                
+                [x.append(id_lote) for x in result ]  
+                              
                 self.get_manager_resquest(copy_result, f)
                 self.result.append(result)
                 # crea la url raiz https://api.mercadolibre.com/items/"MLA781978699
