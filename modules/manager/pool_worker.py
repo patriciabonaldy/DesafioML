@@ -56,16 +56,3 @@ def apply_imap(sites):
         print('User Interupt\n')
     finally:
         pool.close()    
-
-"""
-if __name__ == "__main__":
-    sites = [
-        "https://www.jython.org",
-        "http://olympus.realpython.org/dice",
-    ] * 80
-    start_time = time.time()
-    apply_map_with_callback(sites)
-    duration = time.time() - start_time
-    print(f"Downloaded {len(sites)} in {duration} seconds")
-    print(response_list)
-"""

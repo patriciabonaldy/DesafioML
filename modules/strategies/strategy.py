@@ -4,7 +4,10 @@ import json
 
 
 class Strategy:
-
+    """ 
+        Interfaz que retorna la estrategia
+        dependiendo del tipo de fichero
+    """ 
     
     def __init__(self, typeExtension, limitedColumn, limitedLine):
         self.typeExtension  = typeExtension

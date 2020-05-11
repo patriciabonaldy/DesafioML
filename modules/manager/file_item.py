@@ -21,6 +21,9 @@ class FileItem():
 
 
     def paginate_lines(self):
+        """
+            retorna un paginado de lineas de cada 2500 
+        """
         tope = 2500
         rango = round(len(self.lines)/tope)
         if len(self.lines) <=tope:

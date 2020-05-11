@@ -47,6 +47,10 @@ class ManagerFile():
         
 
     def split_File(self, id_lote,file_object): 
+        """
+            recibe el lote, y el fichero chunk 
+            retorna todas las lineas de un archivo
+        """
         try:
             with open(file_object.fname, 'r', encoding=self.encoding) as f:            
                 bloque = f.read()
@@ -61,6 +65,9 @@ class ManagerFile():
 
 
     def guarda_header_lote(self): 
+        """
+            guarda el id_lote del archivo
+        """
         df = (1,self.filename, 
                 self.encoding, 
                 self.typeExtension, 
@@ -89,8 +96,13 @@ class ManagerFile():
         logger.info("Total split files {}".format(str(len(self.list_files)) )  )
         logger.info("Total regs insertados {}".format(self.num_rows  )  )
 
+
     @profile
-    def upload_chunks(self, file, filename, extens, limitedLine, limitedColumn, encoding):       
+    def upload_chunks(self, file, filename, extens, limitedLine, limitedColumn, encoding):   
+        """ metodo que se invoca en el route /upload
+            recibe el archivo asi como tambien la configuracion escogida por el usuario
+            divide el archivos en varios de aprox 300 mbs 
+        """    
         try:  
             self.remove_files()
             self.filename = filename
@@ -155,6 +167,11 @@ class ManagerFile():
 
     @profile
     def procesa_file(self,id_lote):
+        """ 
+            recibe el id_lote e itera los archivos
+            por cada uno, obtiene las lineas,
+            y las procesas
+        """    
         for f in self.list_files:
             watch_memory("ManagerFile", "procesa_file")    
             self.split_File(id_lote,f)   
@@ -164,7 +181,12 @@ class ManagerFile():
 
     
     def process_lines(self, id_lote, f):
-                
+        """ 
+            recibe el id_lote y un objeto de archivo chunk
+            procesa las lineas del mism,
+            realiza las peticiones a los
+            diferentes endpoints y el resultado guarda en BD
+        """           
         try:
             pool = Pool()
             self.result = []
@@ -210,6 +232,10 @@ class ManagerFile():
             
     
     def remove_files(self):
+        """ 
+            se invoca antes de dividir el archivo grande por varios pequeños
+            limpia e directorio resources/data
+        """  
         onlyfiles = [join(config.config.data_dir, f) for f in listdir(config.config.data_dir) if isfile(join(config.config.data_dir, f))]
         for fname in onlyfiles:
             try:

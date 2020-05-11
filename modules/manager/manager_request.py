@@ -29,8 +29,11 @@ class ManagerRequest():
                               "seller"  : "/users/"
                             }
 
-
+    
     def create_list_item(self):
+        """
+         Retorna un generator de ID's de item paginados de a 20
+        """
         tope = 20
         rango = round(len(self.items)/tope)
         if len(self.items) <=tope:
@@ -49,6 +52,12 @@ class ManagerRequest():
 
 
     def execute_request(self, url, list_items_url):
+        """
+            Recibe una url base, mas un lote de peticiones
+            a la misma, realizando request en paralelo 
+            y retornando un data frame con las que esten en estado 200
+            las que falle se logean automatica en el archivo app.log
+        """
         response_list = apply_imap(list_items_url)
         response_failed = []
         response_ok = []
@@ -77,6 +86,11 @@ class ManagerRequest():
 
 
     def get_currencies(self):
+        """
+            A tra ves de un lote de response del servicio /items
+            agrupa el data frame por tipo de moneda
+            realiza consultas en paralelo al servicio /curriencies
+        """
         try:
             base        = self.urls_partial["base"]
             url_ctg     = self.urls_partial["currencies"]
@@ -101,6 +115,10 @@ class ManagerRequest():
 
 
     def get_sellers(self):
+        """
+            A tra ves de un lote de response del servicio /items
+            realiza consultas en paralelo al servicio /users
+        """
         try:
             base        = self.urls_partial["base"]
             url_ctg     = self.urls_partial["seller"]
@@ -124,6 +142,11 @@ class ManagerRequest():
 
 
     def get_categories(self):
+        """
+            A tra ves de un lote de response del servicio /items
+            agrupa el data frame por tipo de categoria
+            realiza consultas en paralelo al servicio /categories
+        """
         try:
             base        = self.urls_partial["base"]
             url_ctg     = self.urls_partial["category"]
@@ -147,6 +170,10 @@ class ManagerRequest():
 
 
     def merge_df(self):
+        """
+            une los data frame currency, category, seller 
+            con el dataframe padre (response_ok)
+        """
         if len(self.response_ok) == 0:
             return
         else:
@@ -160,12 +187,17 @@ class ManagerRequest():
             
                 merged_seller       = pd.merge(left=merged_currency, right=self.response_seller_ok, how='left', left_on='seller_id', right_on='seller_id')
                 self.response_ok    = merged_seller
-                self.response_ok.drop('seller_id', axis=1, inplace=True)
-        
-            
+                self.response_ok.drop('seller_id', axis=1, inplace=True)        
 
-        
+
     def get_atributes_item(self, copy_result):
+        """
+            a traves de una lista de sites y id
+            realiza peticiones en paralelo al servicio /items 
+            con el response, busca la descripcion de los
+            campos currency, category y seller
+            retorna un data frame 
+        """
         try:
             id_lote     = copy_result[0][2]
             base        = self.urls_partial["base"]
