@@ -23,5 +23,7 @@ La  corutina proporcionan concurrencia y puede combinarse con , no es costoso a 
 
 
 # Optimización de recursos del sistema operativo
-Si tuvieras 1.000.000 de elementos y tuvieras que consultar para cada uno de ellos
-información en una API HTTP. ¿Cómo lo harías? Explicar.
+Si tuvieras 1.000.000 de elementos y tuvieras que consultar para cada uno de ellos información en una API HTTP. 
+¿Cómo lo harías? Explicar.
+
+Realizaria una corutine para agruparlas en bloque de N, luego utillizaria threads para para que cada uno de ellos procese el sub-bloque de esas peticiones y el response lo almacenaria en una lista, que debido a que comparte recursos en memoria no es necesario el uo de semaphore.
