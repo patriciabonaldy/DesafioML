@@ -3,7 +3,7 @@ import os
 from   os import listdir
 from   os.path import isfile, join
 from   multiprocessing import Value, Semaphore, Pool
-from   modules.manager.pool_worker import apply_async_with_callback, waitPool
+from   modules.manager.pool_worker import jodedor
 from   modules.manager.manager_request import ManagerRequest
 from   modules.manager.file_item import FileItem
 from   modules.manager.manager_worker import ManagerWorker
@@ -178,8 +178,8 @@ class ManagerFile():
             self.process_lines(id_lote, f)
         self.oracle.update_estado_lote(id_lote,'PR')    
         self.get_estadisticas()             
+        
 
-    
     def process_lines(self, id_lote, f):
         """ 
             recibe el id_lote y un objeto de archivo chunk
@@ -190,20 +190,15 @@ class ManagerFile():
         try:
             pool = Pool()
             self.result = []
-
-            for lines in  f.paginate_lines(): 
-                if len(lines)==0:
-                    pass
-                watch_memory("ManagerFile", "process_lines") 
-                if pool._state ==  'CLOSE':
-                    pool = Pool()
-                result = apply_async_with_callback(pool, id_lote, lines, self.strategy).get(999999999)
-                copy_result = result.copy()
-                [x.append(id_lote) for x in result ]  
-                              
-                response_ok = self.get_manager_resquest(copy_result, f)
-                self.result.append(response_ok)
-
+            jd = jodedor()
+            parse = self.strategy.get_strategy().parser
+            result = jd.apply_async_with_callback(pool, id_lote, list(f.paginate_lines()), parse)
+            copy_result = result.copy()
+            [ [x.append(id_lote) for x in lns] for lns in result ]  
+                            
+            response_ok = self.get_manager_resquest(id_lote, copy_result, f)
+            self.result= response_ok
+            
             waitPool(pool)     
             if len(self.result) >0:  
                 conex = self.oracle.get_connection_CX()    
@@ -223,10 +218,13 @@ class ManagerFile():
             logger.info("Error procesando sub-archivo {}".format(f.fname) )         
 
 
-    def get_manager_resquest(self, copy_result, f):
+    def get_manager_resquest(self, id_lote, copy_result, f):
         try:
-            id_lote = copy_result[0][2]
-            return self.manager_request.get_atributes_item(copy_result)   
+            result =  []
+            for regs in copy_result:
+                result.append(self.manager_request.get_atributes_item(regs)  )
+            return result
+             
         except Exception as e:
             logger.info("Error obteniendo peticiones- archivo {}, id_lote= {}".format(f.fname, id_lote) ) 
             

@@ -41,7 +41,9 @@ class ManagerRequest():
         try:
             for n in range(rango+1):
                 x = (tope*n)
-                y = ((n+1)*tope)            
+                y = ((n+1)*tope)    
+                if x > len(self.items):
+                    break;        
                 if n==rango:
                     yield ','.join(list(self.items[x:]))
                 else:
@@ -231,6 +233,6 @@ class ManagerRequest():
             raise requests.RequestException ("No existen los ID en -  {} de ML.".format(url))
         except Exception as e:
             logger.error("Error obteniendo peticiones- ")
-            raise requests.RequestException ("Error obteniendo peticiones")
+            self.response_ok[['id', 'site_id', 'price', 'start_time', 'name_catg', 'description_currency', 'nickname']] 
 
             
