@@ -13,7 +13,7 @@ Para este escenario usaria procesos, debido a que permite paralelizar las tareas
 - Un caso en el que usarías threads para resolver un problema y por qué.
 Resp:
 Caso: Se requiere obtener informacion de diferentes sites, para luego procesar esos datos. 
-Utilizaria hilos o threads en la obtencion de esa informacion, como es una operacion de tipo E/S, y no de tipo CPU. con el paralelizaria esta tarea y permitiria compartir recursos entre si. Debido a que los hilos en ejecución de un proceso comparten el mismo espacio de datos que el hilo principal y pueden, por tanto, tener acceso a la misma información o comunicarse entre sí más fácilmente que si estuvieran en procesos separados y suele requerir menos recursos de memoria que ejecutar lo equivalente en procesos separados.
+Utilizaria hilos o threads en la obtencion de esa informacion, como es una operacion de tipo E/S, y no de tipo CPU. con el paralelizaria esta tarea y permitiria compartir recursos entre si. Debido a que los hilos en ejecución de un proceso comparten el mismo espacio de datos que el hilo principal y pueden, por tanto, tener acceso a la misma información o comunicarse entre sí más fácilmente que si estuvieran en procesos separados y suele requerir menos recursos de memoria que ejecutar lo equivalente en procesos NORMALES separados.
 
 
 - Un caso en el que usarías corrutinas para resolver un problema y por qué.
