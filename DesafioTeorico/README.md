@@ -19,7 +19,7 @@ Utilizaria hilos o threads en la obtencion de esa informacion, como es una opera
 - Un caso en el que usarías corrutinas para resolver un problema y por qué.
 Caso: Se requiere cargar grandes datos en memoria, la cual se necesita procesar toda esa informacion. 
 Resp: Utilizaria corutines para cargar por secciones con el fin de procesar en paralelo. Y la informacion la cargaria en mnemoria solo cuando la misma es llanmda
-La  corutina proporcionan concurrencia y puede combinarse con , no es costoso a nivell de memoria, el costo de iniciar una llamada a una funcion usa menos de 1k de memoria. son un tipo procedimientos o subrutinas de las que se puede salir por diversos puntos para posteriormente volver y reiniciar la ejecución desde el último punto de retorno.
+La  corutina proporcionan concurrencia y puede combinarse con hilos/multiprocesos, no es costoso a nivell de memoria, el costo de iniciar una llamada a una funcion usa menos de 1k de memoria. son un tipo procedimientos o subrutinas de las que se puede salir por diversos puntos para posteriormente volver y reiniciar la ejecución desde el último punto de retorno.
 
 
 # Optimización de recursos del sistema operativo
