@@ -32,7 +32,7 @@ class Worker:
     def apply_map(self,  pool, id_lote, lista, strategy):    
         try:
             self._initializer(id_lote, strategy)
-            result =pool.map(self.task, lista)
+            result =pool.imap(self.task, lista)
             return result
         except KeyboardInterrupt:
             # Allow ^C to interrupt from any thread.
