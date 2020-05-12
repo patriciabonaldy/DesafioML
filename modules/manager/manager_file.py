@@ -190,16 +190,16 @@ class ManagerFile():
         try:
             pool = Pool()
             self.result = []
+            result = []
             jd = Worker()
             parse = self.strategy.get_strategy().parser
-            result = jd.apply_map(pool, id_lote, list(f.paginate_lines()), parse)
-            copy_result = result.copy()
+            result = jd.apply_map(pool, id_lote, list(f.paginate_lines()), parse) 
             [ [x.append(id_lote) for x in lns] for lns in result ]  
                             
-            response_ok = self.get_manager_resquest(id_lote, copy_result, f)
+            response_ok = self.get_manager_resquest(id_lote, result, f)
             self.result= response_ok
             
-            waitPool(pool)     
+            #jd.waitPool(pool)     
             if len(self.result) >0:  
                 conex = self.oracle.get_connection_CX()    
                 logging.info('Archivo {} guardando bloque linea'.format(f.fname))
