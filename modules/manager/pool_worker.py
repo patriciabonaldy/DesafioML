@@ -11,7 +11,7 @@ session = None
 result = []
 response_list = []
 
-class jodedor:
+class Worker:
     def _initializer(self, id_lote, strategy):
         self.id_lote = id_lote
         self.strategy = strategy
@@ -29,7 +29,7 @@ class jodedor:
         pool.join()    
 
 
-    def apply_async_with_callback(self,  pool, id_lote, lista, strategy):    
+    def apply_map(self,  pool, id_lote, lista, strategy):    
         try:
             self._initializer(id_lote, strategy)
             result =pool.map(self.task, lista)

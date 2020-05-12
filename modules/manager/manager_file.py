@@ -3,7 +3,7 @@ import os
 from   os import listdir
 from   os.path import isfile, join
 from   multiprocessing import Value, Semaphore, Pool
-from   modules.manager.pool_worker import jodedor
+from   modules.manager.pool_worker import Worker
 from   modules.manager.manager_request import ManagerRequest
 from   modules.manager.file_item import FileItem
 from   modules.manager.manager_worker import ManagerWorker
@@ -190,9 +190,9 @@ class ManagerFile():
         try:
             pool = Pool()
             self.result = []
-            jd = jodedor()
+            jd = Worker()
             parse = self.strategy.get_strategy().parser
-            result = jd.apply_async_with_callback(pool, id_lote, list(f.paginate_lines()), parse)
+            result = jd.apply_map(pool, id_lote, list(f.paginate_lines()), parse)
             copy_result = result.copy()
             [ [x.append(id_lote) for x in lns] for lns in result ]  
                             
