@@ -1,4 +1,5 @@
-from   modules.manager.pool_worker import  apply_imap
+from   modules.manager.pool_worker import  apply_imap_request, apply_map_request
+from   multiprocessing import Pool
 import pandas as pd 
 import logging
 import time
@@ -60,7 +61,7 @@ class ManagerRequest():
             y retornando un data frame con las que esten en estado 200
             las que falle se logean automatica en el archivo app.log
         """
-        response_list = apply_imap(list_items_url)
+        response_list = apply_imap_request(list_items_url)
         response_failed = []
         response_ok = []
         for resp in response_list:
@@ -208,8 +209,11 @@ class ManagerRequest():
             self.items  = [reg[0]+reg[1]  for reg in copy_result]
             list_items  = self.create_list_item()
             list_items_url = list( [ base+url_items+n for n in list_items])
-
-            self.response_list, response_failed, list_ok = self.execute_request(url, list_items_url)
+            pool = Pool(2)
+            response_list = apply_imap_request(pool, list_items_url)
+            pool.close()
+            pool.join() 
+            """self.response_list, response_failed, list_ok = self.execute_request(url, list_items_url)
             if len(list_ok) > 0:
                 response_ok = pd.DataFrame(list_ok)
                 self.response_ok =  response_ok[['id', 'site_id', 'price', 'start_time', 'category_id', 'currency_id', 'seller_id']] 
@@ -227,7 +231,8 @@ class ManagerRequest():
             else:
                 self.oracle.update_estado_lote(id_lote,'ER')
                 raise requests.RequestException ("No existen los ID en - {} de ML.".format(url))
-            return self.response_ok[['id', 'site_id', 'price', 'start_time', 'name_catg', 'description_currency', 'nickname']] 
+            return self.response_ok[['id', 'site_id', 'price', 'start_time', 'name_catg', 'description_currency', 'nickname']] """
+            return list_items_url
         except requests.RequestException as re:
             logger.error("No existen los ID en -  {} de ML.".format(url)) 
             raise requests.RequestException ("No existen los ID en -  {} de ML.".format(url))

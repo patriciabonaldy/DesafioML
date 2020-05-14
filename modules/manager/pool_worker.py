@@ -1,4 +1,6 @@
-from   multiprocessing import Pool, current_process
+import multiprocessing
+import multiprocessing.pool as pool
+from   multiprocessing import Pool, current_process, Process
 from functools import lru_cache
 from   monitor import watch_memory
 import requests
@@ -10,6 +12,27 @@ strategy2 = None
 session = None
 result = []
 response_list = []
+
+
+class NoDaemonProcess(Process):
+    @property
+    def daemon(self):
+        return False
+
+    @daemon.setter
+    def daemon(self, value):
+        pass
+
+
+class NoDaemonContext(type(multiprocessing.get_context())):
+    Process = NoDaemonProcess
+
+# We sub-class multiprocessing.pool.Pool instead of multiprocessing.Pool
+# because the latter is only a wrapper function, not a proper class.
+class MyPool(pool.Pool):
+    def __init__(self, *args, **kwargs):
+        kwargs['context'] = NoDaemonContext()
+        super(MyPool, self).__init__(*args, **kwargs)
 
 class Worker:
     def _initializer(self, id_lote, strategy):
@@ -41,6 +64,20 @@ class Worker:
         finally:
             pool.close()
 
+
+    def apply_map_request(self, sites):    
+        set_global_session()
+        pool = Pool(5)
+        try:        
+            result = pool.map(download_site, sites) 
+            time.sleep(3)
+            return result
+        except KeyboardInterrupt: 
+            print('User Interupt\n')
+        finally:
+            pool.close()   
+        
+
 def set_global_session():
     global session
     if not session:
@@ -53,9 +90,20 @@ def download_site(url):
         return response
 
 
-def apply_imap(sites):    
+def apply_map_request(sites):    
     set_global_session()
-    pool = Pool()
+    pool = Pool(5)
+    try:        
+        result = pool.map(download_site, sites) 
+        time.sleep(3)
+        return result
+    except KeyboardInterrupt: 
+        print('User Interupt\n')
+    finally:
+        pool.close() 
+
+def apply_imap_request(pool, sites):    
+    set_global_session()
     try:        
         result = pool.imap(download_site, sites) 
         time.sleep(5)

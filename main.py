@@ -96,7 +96,8 @@ def upload_file():
 
 @app.route('/jobs')
 def run_jobs(id_lote, mf):     
-    mf.procesa_file(id_lote) 
+    #mf.procesa_file(id_lote) 
+    mf.process_lines2(id_lote)
     return render_template('index.html')
       
 

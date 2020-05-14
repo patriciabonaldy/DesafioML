@@ -3,13 +3,14 @@ import os
 from   os import listdir
 from   os.path import isfile, join
 from   multiprocessing import Value, Semaphore, Pool
-from   modules.manager.pool_worker import Worker
+from   modules.manager.pool_worker import Worker, MyPool
 from   modules.manager.manager_request import ManagerRequest
 from   modules.manager.file_item import FileItem
 from   modules.manager.manager_worker import ManagerWorker
 from   modules.strategies.strategy import Strategy
 from   monitor import profile, watch_memory
 from   config import OracleDB
+import re
 import config 
 import time
 
@@ -23,6 +24,7 @@ class ManagerFile():
     def __init__(self):
         self.oracle = OracleDB()
         self.manager_request = ManagerRequest()
+        self.lines = []
         self.filename = ""
         self.list_files = []
         self.detail_chunks = []
@@ -115,69 +117,50 @@ class ManagerFile():
             
             count_chunks = 0
             stream = file.stream
-            n = 0          
-
-            while True:
-                chunk = stream.read(int(config.config.max_chunk_size))
-                fname = filename.replace("."+extens, str(n)+"."+extens)
-                size  = len(chunk)                
-                save_path  = os.path.join(config.config.data_dir, fname)
-                
-                file_chunk = FileItem(save_path, size, encoding, extens, limitedLine, limitedColumn)
-                self.list_files.append(file_chunk)
-                try:
-                    with open(save_path, "wb") as f:
-                        n+=1
-                        if chunk is not None and size>0:
-                            self.total_uploaded += size
-                            count_chunks += 1
-                            f.write(chunk)   
-                            temp = {}
-                            temp ['chunk_counts'] = count_chunks
-                            temp ['total_bytes']  = self.total_uploaded
-                            temp ['status']       = 'uploading...'
-                            temp ['success']      = True
-                            self.detail_chunks.append(temp)
-                        else:
-                            f.close()
-                            temp = {}
-                            temp ['chunk_counts'] = count_chunks
-                            temp ['total_bytes']  = self.total_uploaded
-                            temp ['status'] = 'DONE'
-                            temp ['success'] = True
-                            self.detail_chunks.append(temp)
-                            break   
-                except FileNotFoundError:  
-                    raise Exception('No existe el archivo {}'.format(fname))            
-                except Exception as e:
-                    temp = {}
-                    temp ['chunk_counts'] = count_chunks
-                    temp ['total_bytes']  = self.total_uploaded
-                    temp ['status'] = e
-                    temp ['success'] = False
-                    self.detail_chunks.append(temp)
+            
+            text = stream.read().decode(self.encoding)
+            lines = re.split(limitedLine+'|\*|\n', text)
+            self.lines = self.paginate_lines(lines)
+            self.total_uploaded  = len(text)
         except Exception as e:
             logger.info("Error creando los chunk files" )
             raise Exception('Error general, por favor contacte el administrador') 
 
 
-    def get_total_uploaded(self):
-        return self.total_uploaded
+    def parse_lines(self, id_lote):
+        pool = Pool(8)
+        jd = Worker()
+        parse = self.strategy.get_strategy().parser
+        self.lines = jd.apply_map(pool, id_lote, list(self.lines), parse)         
+        pool.close()
+        pool.join()
 
 
     @profile
-    def procesa_file(self,id_lote):
-        """ 
-            recibe el id_lote e itera los archivos
-            por cada uno, obtiene las lineas,
-            y las procesas
-        """    
-        for f in self.list_files:
-            watch_memory("ManagerFile", "procesa_file")    
-            self.split_File(id_lote,f)   
-            self.process_lines(id_lote, f)
-        self.oracle.update_estado_lote(id_lote,'PR')    
-        self.get_estadisticas()             
+    def process_lines2(self, id_lote):
+        self.parse_lines(id_lote)  
+        self.get_resquest(id_lote) 
+
+
+    def paginate_lines(self, lines):
+        """
+            retorna un paginado de lineas de cada 2500 
+        """
+        tope = 4000
+        rango = round(len(lines)/tope)
+        if len(lines) <=tope:
+            yield lines
+        for n in range(rango):
+            x = (tope*n)
+            y = ((n+1)*tope)            
+            if n==2:
+                yield lines[x:]
+            else:
+                yield lines[x:y] 
+
+
+    def get_total_uploaded(self):
+        return self.total_uploaded    
         
 
     def process_lines(self, id_lote, f):
@@ -196,11 +179,11 @@ class ManagerFile():
             result = jd.apply_map(pool, id_lote, list(f.paginate_lines()), parse) 
             [ [x.append(id_lote) for x in lns] for lns in result ]  
                             
-            response_ok = self.get_manager_resquest(id_lote, result, f)
-            self.result= response_ok
+            #response_ok = self.get_manager_resquest(id_lote, result, f)
+            #self.result= response_ok
             
-            #jd.waitPool(pool)     
-            if len(self.result) >0:  
+            jd.waitPool(pool)     
+            """if len(self.result) >0:  
                 conex = self.oracle.get_connection_CX()    
                 logging.info('Archivo {} guardando bloque linea'.format(f.fname))
                 try:  
@@ -213,20 +196,26 @@ class ManagerFile():
                 except Exception as econex:
                     logger.info("Error procesando sub-archivo {}".format(f.fname) )  
                 finally:
-                    self.oracle.close_connection(conex)  
+                    self.oracle.close_connection(conex)  """
         except Exception as e:
             logger.info("Error procesando sub-archivo {}".format(f.fname) )         
 
+    def get_sub_list(self, i):
+        return self.lines[i]
 
-    def get_manager_resquest(self, id_lote, copy_result, f):
+
+    def get_resquest(self, id_lote):
         try:
-            result =  []
-            for regs in copy_result:
-                result.append(self.manager_request.get_atributes_item(regs)  )
-            return result
-             
+            pool = MyPool(3)
+            [ [x.append(id_lote) for x in lns] for lns in self.lines ]
+            array_length = len(self.lines)
+            multi_result = pool.map(self.manager_request.get_atributes_item, self.lines)
+            #multi_result = [pool.map(self.manager_request.get_atributes_item, (lns) )  for lns in self.lines].get(99999)
         except Exception as e:
             logger.info("Error obteniendo peticiones- archivo {}, id_lote= {}".format(f.fname, id_lote) ) 
+        finally:
+            pool.close()
+            pool.join()    
             
     
     def remove_files(self):
