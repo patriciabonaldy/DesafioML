@@ -41,10 +41,12 @@ class Worker:
         self.parser   = strategy
 
 
-    def task(self, lines):   
+    def task(self, line):   
         watch_memory("pool worker", "parse") 
-        lns = [self.parser(ln) for ln  in lines if self.parser(ln) is not None]
-        return lns
+        #lns = [self.parser(ln) for ln  in lines if self.parser(ln) is not None]
+        lns = self.parser(line)
+        if lns is not None:
+            return lns
 
 
     def waitPool(self, pool):

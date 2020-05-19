@@ -7,6 +7,7 @@ from   modules.manager.pool_worker import Worker, MyPool
 from   modules.manager.manager_request import ManagerRequest
 from   modules.manager.file_item import FileItem
 from   modules.manager.manager_worker import ManagerWorker
+from   modules.manager.async_files import   AsyncFile
 from   modules.strategies.strategy import Strategy
 from   monitor import profile, watch_memory
 from   config import OracleDB
@@ -122,9 +123,15 @@ class ManagerFile():
             lines = re.split(limitedLine+'|\*|\n', text)
             self.lines = self.paginate_lines(lines)
             self.total_uploaded  = len(text)
+            self.write_chuks()
         except Exception as e:
             logger.info("Error creando los chunk files" )
             raise Exception('Error general, por favor contacte el administrador') 
+    
+
+    def write_chuks(self):
+        asyncfile = AsyncFile()
+        asyncfile.run_save_file(self.filename, self.encoding, self.lines)
 
 
     def parse_lines(self, id_lote):
@@ -138,15 +145,25 @@ class ManagerFile():
 
     @profile
     def process_lines2(self, id_lote):
-        self.parse_lines(id_lote)  
-        self.get_resquest(id_lote) 
+        onlyfiles = [join(config.config.data_dir, f) for f in listdir(config.config.data_dir) if isfile(join(config.config.data_dir, f))]
+        for fname in onlyfiles:
+            try:
+                if os.path.isfile(fname):
+                    with open(fname, 'r', encoding=self.encoding) as f:            
+                        bloque = f.read()
+                        self.lines = bloque.splitlines() 
+                    
+            except Exception as e:
+                logger.info('Failed to delete %s. Reason: %s' % (fname, e))
+            self.parse_lines(id_lote)  
+            self.get_resquest(id_lote) 
 
 
     def paginate_lines(self, lines):
         """
             retorna un paginado de lineas de cada 2500 
         """
-        tope = 4000
+        tope = 10000
         rango = round(len(lines)/tope)
         if len(lines) <=tope:
             yield lines
@@ -206,17 +223,9 @@ class ManagerFile():
 
     def get_resquest(self, id_lote):
         try:
-            pool = MyPool(3)
-            [ [x.append(id_lote) for x in lns] for lns in self.lines ]
-            array_length = len(self.lines)
-            multi_result = pool.map(self.manager_request.get_atributes_item, self.lines)
-            #multi_result = [pool.map(self.manager_request.get_atributes_item, (lns) )  for lns in self.lines].get(99999)
+            multi_result = self.manager_request.get_all_atributes(id_lote, self.lines)
         except Exception as e:
             logger.info("Error obteniendo peticiones- archivo {}, id_lote= {}".format(f.fname, id_lote) ) 
-        finally:
-            pool.close()
-            pool.join()    
-            
     
     def remove_files(self):
         """ 
